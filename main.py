@@ -1,5 +1,6 @@
 import os
 import re
+import time
 import uuid
 
 from fastapi import FastAPI, File, Request, UploadFile
@@ -26,14 +27,21 @@ MAX_FILE_SIZE = 100_000_000  # 100 MB in bytes
 
 # Sanitize filename and add a unique prefix if necessary
 def sanitize_filename(filename: str | None) -> str:
+    # Get the current Unix timestamp
+    timestamp = int(time.time())
+
     if filename is None:
         # Generate a unique suffix using UUID
         unique_suffix = uuid.uuid4().hex[:8]  # First 8 characters of a UUID
-        return f"unnamed_file_{unique_suffix}"
+        return f"{timestamp}_unnamed_file_{unique_suffix}"
     # Replace invalid characters with underscores
     sanitized = re.sub(r"[^\w\.-]", "_", filename)
     # Ensure the filename is not empty
-    return sanitized or f"unnamed_file_{uuid.uuid4().hex[:8]}"
+    return (
+        f"{timestamp}_{sanitized}"
+        if sanitized
+        else f"{timestamp}_unnamed_file_{uuid.uuid4().hex[:8]}"
+    )
 
 
 @app.get("/", response_class=HTMLResponse)
