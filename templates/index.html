@@ -20,6 +20,11 @@
     <p>File Name: {{ file_name }}</p>
     <p>File Size: {{ file_size }} bytes</p>
     {% endif %}
+
+    {% if error %}
+    <h2 style="color: red;">Error</h2>
+    <p>{{ error }}</p>
+    {% endif %}
   </body>
 
 </html>
