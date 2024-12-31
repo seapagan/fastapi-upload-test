@@ -1,9 +1,10 @@
+import json
 import os
 import re
 import time
 import uuid
 
-from fastapi import FastAPI, File, Request, UploadFile
+from fastapi import FastAPI, File, Request, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -49,6 +50,27 @@ async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
+# Store active WebSocket connections
+active_connections = {}
+
+
+@app.websocket("/ws/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: str):
+    await websocket.accept()
+    active_connections[client_id] = websocket
+    try:
+        while True:
+            # Wait for a message from the client (optional)
+            data = await websocket.receive_text()
+            # Send a confirmation message
+            await websocket.send_text(
+                json.dumps({"status": "connected", "client_id": client_id})
+            )
+    except WebSocketDisconnect:
+        del active_connections[client_id]
+        print(f"Client {client_id} disconnected")
+
+
 @app.post("/upload/")
 async def analyze_file(request: Request, file: UploadFile = File(...)):
     try:
@@ -73,21 +95,19 @@ async def analyze_file(request: Request, file: UploadFile = File(...)):
         # Analyze the file (e.g., get its size)
         file_size = os.path.getsize(file_path)
 
-        # Return the result to the frontend
-        return templates.TemplateResponse(
-            "index.html",
-            {"request": request, "file_size": file_size, "file_name": safe_filename},
-        )
+        # Send the file name and size to the frontend via WebSocket
+        for connection in active_connections.values():
+            await connection.send_text(
+                json.dumps(
+                    {
+                        "file_name": safe_filename,
+                        "file_size": file_size,
+                    }
+                )
+            )
+
+        return {"message": "File uploaded successfully."}
     except HTTPException as exc:
-        return templates.TemplateResponse(
-            "index.html",
-            {"request": request, "error": exc.detail},
-        )
+        return {"error": exc.detail}
     except Exception as exc:
-        return templates.TemplateResponse(
-            "index.html",
-            {
-                "request": request,
-                "error": f"An error occurred while processing the file: {str(exc)}",
-            },
-        )
+        return {"error": f"An error occurred while processing the file: {str(exc)}"}
