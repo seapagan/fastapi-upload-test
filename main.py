@@ -72,42 +72,37 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
 
 @app.post("/upload/")
-async def analyze_file(request: Request, file: UploadFile = File(...)):
-    try:
-        # Sanitize the filename and ensure it's unique
-        safe_filename = sanitize_filename(file.filename)
+async def analyze_file(file: UploadFile = File(...)):
+    # Sanitize the filename and ensure it's unique
+    safe_filename = sanitize_filename(file.filename)
 
-        # Save the file to disk and enforce size limit
-        file_path = os.path.join(UPLOAD_DIR, safe_filename)
-        file_size = 0
+    # Save the file to disk and enforce size limit
+    file_path = os.path.join(UPLOAD_DIR, safe_filename)
+    file_size = 0
 
-        with open(file_path, "wb") as buffer:
-            while chunk := await file.read(8192):  # Read file in chunks of 8 KB
-                file_size += len(chunk)
-                if file_size > MAX_FILE_SIZE:
-                    # Delete the partially uploaded file
-                    os.remove(file_path)
-                    raise HTTPException(
-                        status_code=413, detail="File size exceeds the 100 MB limit"
-                    )
-                buffer.write(chunk)
-
-        # Analyze the file (e.g., get its size)
-        file_size = os.path.getsize(file_path)
-
-        # Send the file name and size to the frontend via WebSocket
-        for connection in active_connections.values():
-            await connection.send_text(
-                json.dumps(
-                    {
-                        "file_name": safe_filename,
-                        "file_size": file_size,
-                    }
+    with open(file_path, "wb") as buffer:
+        while chunk := await file.read(8192):  # Read file in chunks of 8 KB
+            file_size += len(chunk)
+            if file_size > MAX_FILE_SIZE:
+                # Delete the partially uploaded file
+                os.remove(file_path)
+                raise HTTPException(
+                    status_code=413, detail="File size exceeds the 100 MB limit"
                 )
-            )
+            buffer.write(chunk)
 
-        return {"message": "File uploaded successfully."}
-    except HTTPException as exc:
-        return {"error": exc.detail}
-    except Exception as exc:
-        return {"error": f"An error occurred while processing the file: {str(exc)}"}
+    # Analyze the file (e.g., get its size)
+    file_size = os.path.getsize(file_path)
+
+    # Send the file name and size to the frontend via WebSocket
+    for connection in active_connections.values():
+        await connection.send_text(
+            json.dumps(
+                {
+                    "file_name": safe_filename,
+                    "file_size": file_size,
+                }
+            )
+        )
+
+    return {"message": "File uploaded successfully."}

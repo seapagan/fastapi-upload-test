@@ -25,20 +25,30 @@ document.getElementById("uploadForm").onsubmit = async function (event) {
   event.preventDefault();
   const formData = new FormData(event.target);
 
-  // Upload file using fetch
-  const response = await fetch("/upload/", {
-    method: "POST",
-    body: formData,
-  });
+  // Clear any previous error messages
+  document.getElementById("error").textContent = "";
 
-  if (response.ok) {
+  // Upload file using fetch
+  try {
+    const response = await fetch("/upload/", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      // Handle HTTP errors (e.g., 413, 500)
+      const error = await response.json();
+      throw new Error(error.detail || "An unknown error occurred.");
+    }
+
     const result = await response.json();
     console.log("Upload successful:", result.message);
 
     // Clear the file input field
     document.getElementById("uploadForm").reset();
-  } else {
-    const error = await response.json();
-    console.error("Upload failed:", error);
+  } catch (error) {
+    // Display the error message in the frontend
+    console.error("Upload failed:", error.message);
+    document.getElementById("error").textContent = `Error: ${error.message}`;
   }
 };
