@@ -58,6 +58,9 @@
         if (response.ok) {
           const result = await response.json();
           console.log("Upload successful:", result.message);
+
+          // Clear the file input field
+          document.getElementById("uploadForm").reset();
         } else {
           const error = await response.json();
           console.error("Upload failed:", error);
