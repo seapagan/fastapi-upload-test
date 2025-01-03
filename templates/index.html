@@ -15,14 +15,14 @@
       <button type="submit">Upload</button>
     </form>
 
+    <!-- Error message display -->
+    <p id="error" style="color: red;"></p>
+
     <h2>Analysis Result</h2>
     <div id="result">
       <p id="fileName">File Name: </p>
       <p id="fileSize">File Size: </p>
     </div>
-
-    <!-- Error message display -->
-    <p id="error" style="color: red;"></p>
 
     <!-- Include the external JavaScript file -->
     <script src="{{ url_for('static', path='scripts.js') }}"></script>
