@@ -2,6 +2,9 @@
 const clientId = Math.random().toString(36).substring(7); // Generate a random client ID
 const ws = new WebSocket(`ws://localhost:8000/ws/${clientId}`);
 
+// Maximum file size (100 MB)
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB in bytes
+
 ws.onmessage = function (event) {
   console.log("WebSocket message received:", event.data); // Debugging: Log the message
   try {
@@ -31,6 +34,17 @@ document.getElementById("uploadForm").onsubmit = async function (event) {
 
   // Clear any previous error messages
   document.getElementById("error").textContent = "";
+
+  // Get the selected file
+  const fileInput = document.querySelector('input[type="file"]');
+  const file = fileInput.files[0];
+
+  // Check file size on the frontend
+  if (file.size > MAX_FILE_SIZE) {
+    document.getElementById("error").textContent =
+      "Error: File size exceeds the 100 MB limit.";
+    return; // Stop the upload
+  }
 
   // Upload file using fetch
   try {

@@ -76,7 +76,10 @@ async def analyze_file(file: UploadFile = File(...)):
     # Sanitize the filename and ensure it's unique
     safe_filename = sanitize_filename(file.filename)
 
-    # Save the file to disk and enforce size limit
+    # Save the file to disk and enforce size limit - this should only be
+    # relevant when the filesize is just a little bigger than the limit, as the
+    # front end will alrady filter out huge files - it's just not terribly
+    # accurate.
     file_path = os.path.join(UPLOAD_DIR, safe_filename)
     file_size = 0
 
@@ -84,7 +87,7 @@ async def analyze_file(file: UploadFile = File(...)):
         while chunk := await file.read(8192):  # Read file in chunks of 8 KB
             file_size += len(chunk)
             if file_size > MAX_FILE_SIZE:
-                # Delete the partially uploaded file
+                # Delete the uploaded file
                 os.remove(file_path)
                 raise HTTPException(
                     status_code=413, detail="File size exceeds the 100 MB limit"
