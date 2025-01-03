@@ -6,11 +6,15 @@ ws.onmessage = function (event) {
   console.log("WebSocket message received:", event.data); // Debugging: Log the message
   try {
     const data = JSON.parse(event.data);
-    if (data.file_name && data.file_size) {
-      // Update the HTML with the file name and size
+    if (data.file_size) {
+      // Get the original filename from the file input
+      const fileInput = document.querySelector('input[type="file"]');
+      const originalFileName = fileInput.files[0].name;
+
+      // Update the HTML with the original file name and size
       document.getElementById(
         "fileName"
-      ).textContent = `File Name: ${data.file_name}`;
+      ).textContent = `File Name: ${originalFileName}`;
       document.getElementById(
         "fileSize"
       ).textContent = `File Size: ${data.file_size} bytes`;

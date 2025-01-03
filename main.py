@@ -94,12 +94,11 @@ async def analyze_file(file: UploadFile = File(...)):
     # Analyze the file (e.g., get its size)
     file_size = os.path.getsize(file_path)
 
-    # Send the file name and size to the frontend via WebSocket
+    # Send only the file size to the frontend via WebSocket
     for connection in active_connections.values():
         await connection.send_text(
             json.dumps(
                 {
-                    "file_name": safe_filename,
                     "file_size": file_size,
                 }
             )
