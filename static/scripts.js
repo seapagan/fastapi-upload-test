@@ -1,9 +1,15 @@
+// Maximum file size (100 MB)
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB in bytes
+
+// Function to format file size with locale settings
+function formatFileSize(bytes, locale = "en-GB") {
+  const formatter = new Intl.NumberFormat(locale);
+  return formatter.format(bytes);
+}
+
 // Connect to WebSocket
 const clientId = Math.random().toString(36).substring(7); // Generate a random client ID
 const ws = new WebSocket(`ws://localhost:8000/ws/${clientId}`);
-
-// Maximum file size (100 MB)
-const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB in bytes
 
 ws.onmessage = function (event) {
   console.log("WebSocket message received:", event.data); // Debugging: Log the message
@@ -14,13 +20,16 @@ ws.onmessage = function (event) {
       const fileInput = document.querySelector('input[type="file"]');
       const originalFileName = fileInput.files[0].name;
 
-      // Update the HTML with the original file name and size
+      // Format the file size with locale settings
+      const formattedFileSize = formatFileSize(data.file_size);
+
+      // Update the HTML with the original file name and formatted size
       document.getElementById(
         "fileName"
       ).textContent = `File Name: ${originalFileName}`;
       document.getElementById(
         "fileSize"
-      ).textContent = `File Size: ${data.file_size} bytes`;
+      ).textContent = `File Size: ${formattedFileSize} bytes`;
     }
   } catch (error) {
     console.error("Error parsing WebSocket message:", error);
